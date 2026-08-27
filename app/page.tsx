@@ -69,6 +69,7 @@ export default function Home() {
       loopRef.current = requestAnimationFrame(processFrame); return;
     }
     const width = video.videoWidth, height = video.videoHeight;
+    video.width = width; video.height = height;
     canvas.width = width; canvas.height = height;
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
@@ -91,7 +92,7 @@ export default function Home() {
       ctx.fillText(String(i + 1), face.x + 3, Math.max(face.y - 5, 18));
     }
     setCount(faces.size());
-    maximum.delete(); minimum.delete(); faces.delete(); gray.delete(); frame.delete(); capture.delete();
+    faces.delete(); gray.delete(); frame.delete(); capture.delete();
     loopRef.current = requestAnimationFrame(processFrame);
   }
 

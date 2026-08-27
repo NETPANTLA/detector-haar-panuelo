@@ -55,6 +55,7 @@ function processFrame() {
   let capture, frame, gray, faces, minimum, maximum;
   try {
     const width = video.videoWidth, height = video.videoHeight;
+    video.width = width; video.height = height;
     canvas.width = width; canvas.height = height;
     const ctx = canvas.getContext('2d');
     capture = new cv.VideoCapture(video);
@@ -71,7 +72,7 @@ function processFrame() {
     statusText.textContent=`Cámara activa; error de Haar: ${error.message || error}`;
     countText.textContent='—';
   } finally {
-    maximum?.delete(); minimum?.delete(); faces?.delete(); gray?.delete(); frame?.delete(); capture?.delete();
+    faces?.delete(); gray?.delete(); frame?.delete(); capture?.delete();
   }
 }
 
