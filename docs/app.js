@@ -9,45 +9,37 @@ const scale = document.querySelector('#scale');
 const neighbors = document.querySelector('#neighbors');
 const minSize = document.querySelector('#minSize');
 
-const analysisCanvas = document.createElement('canvas');
-const analysisContext = analysisCanvas.getContext('2d', { willReadFrequently: true });
-const worker = new Worker('haar-worker.js?v=1');
 const analysisWidth = 320;
 const analysisHeight = 240;
+const processingInterval = 350;
 
+let detector;
+let detectorScale;
 let stream;
 let animationId;
 let running = false;
-let workerBusy = false;
 let lastProcessedAt = 0;
-const processingInterval = 350;
 
-analysisCanvas.width = analysisWidth;
-analysisCanvas.height = analysisHeight;
-
-worker.addEventListener('message', ({ data }) => {
-  if (data.type === 'ready') {
-    cameraButton.disabled = false;
-    statusText.textContent = 'Detector preparado. Inicia la cámara.';
-    return;
+function prepareDetector() {
+  const selectedScale = Number(scale.value);
+  if (!detector || detectorScale !== selectedScale) {
+    detector = new objectdetect.detector(
+      analysisWidth,
+      analysisHeight,
+      selectedScale,
+      objectdetect.frontalface
+    );
+    detectorScale = selectedScale;
   }
+}
 
-  if (data.type === 'result') {
-    workerBusy = false;
-    if (running) drawDetections(data.faces);
-    return;
-  }
-
-  if (data.type === 'error') {
-    workerBusy = false;
-    statusText.textContent = `Error del detector: ${data.message}`;
-  }
-});
-
-worker.addEventListener('error', () => {
-  workerBusy = false;
-  statusText.textContent = 'No se pudo cargar el detector Haar.';
-});
+try {
+  prepareDetector();
+  cameraButton.disabled = false;
+  statusText.textContent = 'Detector preparado. Inicia la cámara.';
+} catch (error) {
+  statusText.textContent = `No se pudo preparar el detector: ${error.message || error}`;
+}
 
 function updateLabels() {
   document.querySelector('#scaleValue').value = Number(scale.value).toFixed(2);
@@ -56,12 +48,14 @@ function updateLabels() {
 }
 
 [scale, neighbors, minSize].forEach(input => input.addEventListener('input', updateLabels));
+scale.addEventListener('change', prepareDetector);
 
 sensitiveButton.addEventListener('click', () => {
   scale.value = '1.03';
   neighbors.value = '1';
   minSize.value = '10';
   updateLabels();
+  prepareDetector();
 });
 
 cameraButton.addEventListener('click', async () => {
@@ -93,20 +87,19 @@ cameraButton.addEventListener('click', async () => {
 function processFrame(timestamp = 0) {
   if (!running) return;
 
-  if (video.videoWidth && !workerBusy && timestamp - lastProcessedAt >= processingInterval) {
+  if (video.videoWidth && timestamp - lastProcessedAt >= processingInterval) {
     lastProcessedAt = timestamp;
-    analysisContext.drawImage(video, 0, 0, analysisWidth, analysisHeight);
-    const image = analysisContext.getImageData(0, 0, analysisWidth, analysisHeight);
-    workerBusy = true;
-    worker.postMessage({
-      type: 'detect',
-      width: analysisWidth,
-      height: analysisHeight,
-      buffer: image.data.buffer,
-      scaleFactor: Number(scale.value),
-      minNeighbors: Number(neighbors.value),
-      minSize: Math.max(5, Math.round(Number(minSize.value) * analysisWidth / 640))
-    }, [image.data.buffer]);
+    try {
+      prepareDetector();
+      const grouped = Math.max(0, Number(neighbors.value));
+      const minimum = Number(minSize.value) * analysisWidth / 640;
+      const detections = detector.detect(video, grouped, 2, undefined, false)
+        .filter(face => face[2] >= minimum && face[3] >= minimum)
+        .map(face => ({ x: face[0], y: face[1], width: face[2], height: face[3] }));
+      drawDetections(detections);
+    } catch (error) {
+      statusText.textContent = `Error del detector: ${error.message || error}`;
+    }
   }
 
   animationId = requestAnimationFrame(processFrame);
