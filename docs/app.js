@@ -116,15 +116,12 @@ function drawDetections(faces) {
 
   context.clearRect(0, 0, width, height);
   context.strokeStyle = '#e53935';
-  context.fillStyle = '#e53935';
   context.lineWidth = Math.max(2, width / 500);
-  context.font = `700 ${Math.max(15, width / 55)}px Arial`;
 
-  faces.forEach((face, index) => {
+  faces.forEach(face => {
     const x = face.x * scaleX;
     const y = face.y * scaleY;
     context.strokeRect(x, y, face.width * scaleX, face.height * scaleY);
-    context.fillText(String(index + 1), x + 3, Math.max(y - 5, 18));
   });
   countText.textContent = String(faces.length);
 }
