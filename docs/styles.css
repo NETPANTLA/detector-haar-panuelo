@@ -13,6 +13,7 @@ main { width:min(1240px,calc(100% - 40px)); margin:28px auto; display:grid; grid
 video { position:absolute; width:100%; height:100%; object-fit:cover; opacity:0; }
 canvas { position:absolute; width:100%; height:100%; object-fit:cover; }
 .placeholder { position:absolute; inset:0; display:grid; place-content:center; text-align:center; padding:30px; background:radial-gradient(circle,#123d2c,#07110d 68%); }
+.placeholder[hidden] { display:none; }
 .placeholder p { max-width:430px; margin-top:10px; color:#ffffff8c; line-height:1.55; }
 .camera-icon { display:grid; place-items:center; width:80px; height:80px; margin:0 auto 20px; border:1px solid #6ee7b74d; border-radius:50%; background:#34d3991a; font-size:32px; }
 .counter { position:absolute; top:16px; left:16px; padding:10px 14px; border:1px solid #ffffff1a; border-radius:12px; background:#000b; }
