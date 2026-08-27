@@ -38,29 +38,41 @@ cameraButton.addEventListener('click', async () => {
   if (running) return stopCamera();
   try {
     stream = await navigator.mediaDevices.getUserMedia({ video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'}, audio:false });
-    video.srcObject = stream; await video.play();
+    video.srcObject = stream;
+    await video.play();
     running = true; placeholder.hidden = true; badge.textContent = 'EN VIVO'; badge.classList.add('live');
     cameraButton.textContent = 'Detener cámara'; statusText.textContent = 'Analizando video en tiempo real';
-    processFrame();
-  } catch (_) { statusText.textContent = 'No fue posible abrir la cámara. Revisa el permiso.'; }
+    requestAnimationFrame(processFrame);
+  } catch (error) {
+    statusText.textContent = error.name === 'NotAllowedError'
+      ? 'Permiso de cámara rechazado. Habilítalo en el navegador.'
+      : `No fue posible iniciar la cámara: ${error.message || error.name}`;
+  }
 });
 
 function processFrame() {
   if (!running || !video.videoWidth) { animationId = requestAnimationFrame(processFrame); return; }
-  const width = video.videoWidth, height = video.videoHeight;
-  canvas.width = width; canvas.height = height;
-  const ctx = canvas.getContext('2d');
-  const capture = new cv.VideoCapture(video);
-  const frame = new cv.Mat(height,width,cv.CV_8UC4), gray = new cv.Mat(), faces = new cv.RectVector();
-  const minimum = new cv.Size(Number(minSize.value),Number(minSize.value)), maximum = new cv.Size(0,0);
-  capture.read(frame); cv.cvtColor(frame,gray,cv.COLOR_RGBA2GRAY); cv.equalizeHist(gray,gray);
-  detector.detectMultiScale(gray,faces,Number(scale.value),Number(neighbors.value),0,minimum,maximum);
-  ctx.drawImage(video,0,0,width,height); ctx.strokeStyle='#34d399'; ctx.fillStyle='#34d399';
-  ctx.lineWidth=Math.max(2,width/500); ctx.font=`700 ${Math.max(15,width/55)}px Arial`;
-  for(let i=0;i<faces.size();i++){const f=faces.get(i);ctx.strokeRect(f.x,f.y,f.width,f.height);ctx.fillText(String(i+1),f.x+3,Math.max(f.y-5,18));}
-  countText.textContent=String(faces.size());
-  maximum.delete();minimum.delete();faces.delete();gray.delete();frame.delete();capture.delete();
-  animationId=requestAnimationFrame(processFrame);
+  let capture, frame, gray, faces, minimum, maximum;
+  try {
+    const width = video.videoWidth, height = video.videoHeight;
+    canvas.width = width; canvas.height = height;
+    const ctx = canvas.getContext('2d');
+    capture = new cv.VideoCapture(video);
+    frame = new cv.Mat(height,width,cv.CV_8UC4); gray = new cv.Mat(); faces = new cv.RectVector();
+    minimum = new cv.Size(Number(minSize.value),Number(minSize.value)); maximum = new cv.Size(0,0);
+    capture.read(frame); cv.cvtColor(frame,gray,cv.COLOR_RGBA2GRAY); cv.equalizeHist(gray,gray);
+    detector.detectMultiScale(gray,faces,Number(scale.value),Number(neighbors.value),0,minimum,maximum);
+    ctx.clearRect(0,0,width,height); ctx.strokeStyle='#34d399'; ctx.fillStyle='#34d399';
+    ctx.lineWidth=Math.max(2,width/500); ctx.font=`700 ${Math.max(15,width/55)}px Arial`;
+    for(let i=0;i<faces.size();i++){const f=faces.get(i);ctx.strokeRect(f.x,f.y,f.width,f.height);ctx.fillText(String(i+1),f.x+3,Math.max(f.y-5,18));}
+    countText.textContent=String(faces.size());
+    animationId=requestAnimationFrame(processFrame);
+  } catch (error) {
+    statusText.textContent=`Cámara activa; error de Haar: ${error.message || error}`;
+    countText.textContent='—';
+  } finally {
+    maximum?.delete(); minimum?.delete(); faces?.delete(); gray?.delete(); frame?.delete(); capture?.delete();
+  }
 }
 
 function stopCamera() {
