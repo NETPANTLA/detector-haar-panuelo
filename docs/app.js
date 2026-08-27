@@ -5,11 +5,12 @@ const cameraButton = document.querySelector('#cameraButton');
 const sensitiveButton = document.querySelector('#sensitiveButton');
 const statusText = document.querySelector('#status');
 const countText = document.querySelector('#count');
-const badge = document.querySelector('#liveBadge');
 const scale = document.querySelector('#scale');
 const neighbors = document.querySelector('#neighbors');
 const minSize = document.querySelector('#minSize');
 let detector, stream, animationId, running = false;
+let lastProcessedAt = 0;
+const processingInterval = 200;
 
 window.onOpenCvScriptLoaded = async function () {
   try {
@@ -51,10 +52,10 @@ sensitiveButton.addEventListener('click', () => {
 cameraButton.addEventListener('click', async () => {
   if (running) return stopCamera();
   try {
-    stream = await navigator.mediaDevices.getUserMedia({ video:{width:{ideal:1280},height:{ideal:720},facingMode:'user'}, audio:false });
+    stream = await navigator.mediaDevices.getUserMedia({ video:{width:{ideal:640},height:{ideal:480},facingMode:'user'}, audio:false });
     video.srcObject = stream;
     await video.play();
-    running = true; placeholder.hidden = true; badge.textContent = 'EN VIVO'; badge.classList.add('live');
+    running = true; placeholder.hidden = true; lastProcessedAt = 0;
     cameraButton.textContent = 'Detener cámara'; statusText.textContent = 'Analizando video en tiempo real';
     requestAnimationFrame(processFrame);
   } catch (error) {
@@ -64,8 +65,13 @@ cameraButton.addEventListener('click', async () => {
   }
 });
 
-function processFrame() {
+function processFrame(timestamp = 0) {
   if (!running || !video.videoWidth) { animationId = requestAnimationFrame(processFrame); return; }
+  if (timestamp - lastProcessedAt < processingInterval) {
+    animationId = requestAnimationFrame(processFrame);
+    return;
+  }
+  lastProcessedAt = timestamp;
   let capture, frame, gray, faces, minimum, maximum;
   try {
     const width = video.videoWidth, height = video.videoHeight;
@@ -77,7 +83,7 @@ function processFrame() {
     minimum = new cv.Size(Number(minSize.value),Number(minSize.value)); maximum = new cv.Size(0,0);
     capture.read(frame); cv.cvtColor(frame,gray,cv.COLOR_RGBA2GRAY); cv.equalizeHist(gray,gray);
     detector.detectMultiScale(gray,faces,Number(scale.value),Number(neighbors.value),0,minimum,maximum);
-    ctx.clearRect(0,0,width,height); ctx.strokeStyle='#34d399'; ctx.fillStyle='#34d399';
+    ctx.clearRect(0,0,width,height); ctx.strokeStyle='#e53935'; ctx.fillStyle='#e53935';
     ctx.lineWidth=Math.max(2,width/500); ctx.font=`700 ${Math.max(15,width/55)}px Arial`;
     for(let i=0;i<faces.size();i++){const f=faces.get(i);ctx.strokeRect(f.x,f.y,f.width,f.height);ctx.fillText(String(i+1),f.x+3,Math.max(f.y-5,18));}
     countText.textContent=String(faces.size());
@@ -85,6 +91,7 @@ function processFrame() {
   } catch (error) {
     statusText.textContent=`Cámara activa; error de Haar: ${error.message || error}`;
     countText.textContent='—';
+    animationId=requestAnimationFrame(processFrame);
   } finally {
     faces?.delete(); gray?.delete(); frame?.delete(); capture?.delete();
   }
@@ -92,6 +99,6 @@ function processFrame() {
 
 function stopCamera() {
   running=false; cancelAnimationFrame(animationId); stream?.getTracks().forEach(track=>track.stop()); video.srcObject=null;
-  placeholder.hidden=false; badge.textContent='EN ESPERA'; badge.classList.remove('live'); cameraButton.textContent='Iniciar cámara';
+  placeholder.hidden=false; cameraButton.textContent='Iniciar cámara';
   countText.textContent='0'; statusText.textContent='Cámara detenida';
 }

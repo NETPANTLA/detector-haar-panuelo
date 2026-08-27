@@ -3,41 +3,31 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
-  <meta name="description" content="Detector Haar en tiempo real para evaluar patrones textiles.">
-  <title>Detector Haar · Pañuelo</title>
-  <link rel="stylesheet" href="styles.css?v=4">
+  <meta name="description" content="Detección facial Haar en tiempo real con OpenCV.js.">
+  <title>Detección facial Haar</title>
+  <link rel="stylesheet" href="styles.css?v=7">
 </head>
 <body>
-  <header>
-    <div>
-      <p class="eyebrow">Laboratorio textil adversarial</p>
-      <h1>Detector Haar · Pañuelo</h1>
-    </div>
-    <span id="liveBadge" class="badge">EN ESPERA</span>
-  </header>
-
   <main>
+    <h1>Detección facial Haar</h1>
+    <p class="subtitle">Detección facial en tiempo real usando OpenCV.js</p>
     <section class="viewer-card">
       <div class="viewer">
         <video id="video" playsinline muted></video>
         <canvas id="canvas"></canvas>
         <div id="placeholder" class="placeholder">
-          <div class="camera-icon">◉</div>
-          <h2>Prueba el patrón frente a la cámara</h2>
-          <p>Los recuadros verdes son candidatos faciales, no identidades reconocidas.</p>
+          <h2>Cámara detenida</h2>
+          <p>Presiona el botón para comenzar.</p>
         </div>
-        <div class="counter"><span>Candidatos</span><strong id="count">0</strong></div>
+        <div class="counter">Detecciones: <strong id="count">0</strong></div>
       </div>
       <div class="actions">
         <p id="status" aria-live="polite">Cargando el detector Haar…</p>
         <button id="cameraButton" disabled>Iniciar cámara</button>
       </div>
-    </section>
-
-    <aside>
-      <p class="eyebrow">Sensibilidad</p>
-      <h2>Ajustes en tiempo real</h2>
-      <p class="intro">Más sensibilidad encuentra más patrones, pero también aumenta los falsos positivos.</p>
+      <details>
+        <summary>Ajustes del detector</summary>
+        <div class="settings">
 
       <label>
         <span><b>Factor de escala</b><output id="scaleValue">1.03</output></span>
@@ -54,12 +44,14 @@
         <input id="minSize" type="range" min="5" max="100" step="5" value="10">
         <small>Permite incluir patrones más pequeños.</small>
       </label>
-      <button id="sensitiveButton" class="secondary">Usar modo alta sensibilidad</button>
-    </aside>
+          <button id="sensitiveButton" class="secondary">Alta sensibilidad</button>
+        </div>
+      </details>
+    </section>
   </main>
 
   <footer>La imagen de la cámara se procesa localmente en tu navegador.</footer>
-  <script src="app.js?v=6"></script>
+  <script src="app.js?v=7"></script>
   <script async src="opencv.js?v=1" onload="onOpenCvScriptLoaded()" onerror="document.querySelector('#status').textContent='Error al cargar OpenCV.js'"></script>
 </body>
 </html>
