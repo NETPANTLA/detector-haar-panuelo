@@ -652,7 +652,9 @@ var objectdetect = (function() {
 		 * @param classifier  Compiled cascade classifier
 		 */
 		function detector(width, height, scaleFactor, classifier) {
-			this.canvas = document.createElement('canvas');
+			this.canvas = typeof OffscreenCanvas !== 'undefined'
+				? new OffscreenCanvas(width, height)
+				: document.createElement('canvas');
 			this.canvas.width = width;
 			this.canvas.height = height;
 			this.context = this.canvas.getContext('2d');
