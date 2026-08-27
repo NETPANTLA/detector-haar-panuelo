@@ -59,7 +59,7 @@
   </main>
 
   <footer>La imagen de la cámara se procesa localmente en tu navegador.</footer>
-  <script src="app.js?v=5"></script>
-  <script async src="https://docs.opencv.org/4.x/opencv.js" onload="onOpenCvScriptLoaded()"></script>
+  <script src="app.js?v=6"></script>
+  <script async src="opencv.js?v=1" onload="onOpenCvScriptLoaded()" onerror="document.querySelector('#status').textContent='Error al cargar OpenCV.js'"></script>
 </body>
 </html>
