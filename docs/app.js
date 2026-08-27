@@ -13,7 +13,7 @@ let detector, stream, animationId, running = false;
 
 window.onOpenCvScriptLoaded = async function () {
   try {
-    window.cv = window.cv instanceof Promise ? await window.cv : window.cv;
+    window.cv = await waitForOpenCv();
     const data = new Uint8Array(await (await fetch('haarcascade_frontalface_default.xml')).arrayBuffer());
     try { cv.FS_createDataFile('/', 'haar.xml', data, true, false, false); } catch (_) {}
     detector = new cv.CascadeClassifier();
@@ -22,6 +22,20 @@ window.onOpenCvScriptLoaded = async function () {
     statusText.textContent = 'Detector preparado. Inicia la cámara.';
   } catch (error) { statusText.textContent = `Error: ${error.message}`; }
 };
+
+async function waitForOpenCv() {
+  const deadline = Date.now() + 30000;
+  while (Date.now() < deadline) {
+    let candidate = window.cv;
+    if (candidate && typeof candidate.then === 'function') {
+      candidate = await candidate;
+      window.cv = candidate;
+    }
+    if (candidate && typeof candidate.CascadeClassifier === 'function') return candidate;
+    await new Promise(resolve => setTimeout(resolve, 100));
+  }
+  throw new Error('OpenCV.js no terminó de inicializar');
+}
 
 function updateLabels() {
   document.querySelector('#scaleValue').value = Number(scale.value).toFixed(2);
