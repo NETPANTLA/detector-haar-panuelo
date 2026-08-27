@@ -1,7 +1,7 @@
 importScripts('objectdetect.js?v=2', 'objectdetect.frontalface.js?v=1');
 
-const width = 240;
-const height = 180;
+const width = 320;
+const height = 240;
 let detector;
 let detectorScale;
 
@@ -16,7 +16,7 @@ self.addEventListener('message', ({ data }) => {
   if (data.type !== 'detect') return;
   try {
     prepareDetector(data.scaleFactor);
-    const faces = detector.detect(data.frame, Math.max(0, data.minNeighbors), 3, undefined, false)
+    const faces = detector.detect(data.frame, Math.max(0, data.minNeighbors), 1, undefined, false)
       .filter(face => face[2] >= data.minSize && face[3] >= data.minSize)
       .map(face => ({ x: face[0], y: face[1], width: face[2], height: face[3] }));
     data.frame.close();

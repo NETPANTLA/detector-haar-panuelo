@@ -9,10 +9,10 @@ const scale = document.querySelector('#scale');
 const neighbors = document.querySelector('#neighbors');
 const minSize = document.querySelector('#minSize');
 
-const analysisWidth = 240;
-const analysisHeight = 180;
-const processingInterval = 250;
-const worker = new Worker('haar-worker.js?v=2');
+const analysisWidth = 320;
+const analysisHeight = 240;
+const processingInterval = 500;
+const worker = new Worker('haar-worker.js?v=3');
 
 let stream;
 let animationId;
